@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Time to clone the Script') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Bsanjen/Basic-Shell-script.git'
+            }
+        }
+
+        stage('Running the script') {
+            steps {
+                script {
+                    sh 'chmod +x ./inv_details.sh'
+                    def dockerfileContent = sh(script: './inv_details.sh', returnStdout: true).trim()
+                    env.DOCKERFILE_CONTENT = dockerfileContent
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            emailext (
+                subject: 'Jenkins: Dockerfile Content',
+                to: 'sanjen.bariki@amrutsoftware.com',
+                from: 'jenkins@example.com',
+                replyTo: 'jenkins@example.com',
+                mimeType: 'text/html',
+                body: """\
+Hello,
+
+Here is the output of <code>inv_details.sh</code> from GitHub:
+
+<pre>${env.DOCKERFILE_CONTENT}</pre>
+
+-- Jenkins
+"""
+            )
+        }
+    }
+}
